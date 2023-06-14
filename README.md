@@ -5,7 +5,7 @@ This module can parse topology and demand files either **separately** or **combi
 The data can then be accessed via native Python objects.
 
 ## Usage
-A usage example is provided in [`examples/demand-visualization`](./examples/demand-visualization).
+A usage example is provided in [`examples/demand-visualization`](https://github.com/leon-richardt/python-repetita-parser/tree/main/examples/demand-visualization).
 To try it, run the following commands:
 ```bash
 $ cd examples/demand-visualization
