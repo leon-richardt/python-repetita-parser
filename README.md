@@ -22,6 +22,8 @@ Via pip:
 pip install repetita-parser
 ```
 
+An AUR package under the name of [`python-repetita-parser`](https://aur.archlinux.org/packages/python-repetita-parser) is available as well.
+
 
 ## Data Format
 REPETITA defines two file formats, one for topology files and another for demand files.
