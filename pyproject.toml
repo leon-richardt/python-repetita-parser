@@ -29,9 +29,9 @@ dependencies = ["numpy"]
 networkx = ["networkx"]
 
 [project.urls]
-Documentation = "https://github.com/leon-richardt/repetita-parser#readme"
-Issues = "https://github.com/leon-richardt/repetita-parser/issues"
-Source = "https://github.com/leon-richardt/repetita-parser"
+Documentation = "https://github.com/leon-richardt/python-repetita-parser#readme"
+Issues = "https://github.com/leon-richardt/python-repetita-parser/issues"
+Source = "https://github.com/leon-richardt/python-repetita-parser"
 
 [tool.hatch.build]
 exclude = [
