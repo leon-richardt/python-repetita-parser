@@ -28,10 +28,10 @@ def plot(instance):
 
     fig, axes = plt.subplot_mosaic(
         """
-       CAA
-       CAA
-       EBD
-       EBD
+        CAA
+        CAA
+        EBD
+        EBD
     """
     )
 
@@ -74,6 +74,7 @@ def plot(instance):
         font_color="#f4f4f4",
         ax=axes["E"],
     )
+    axes["E"].set_title("Drawing of the network")
 
     return fig, axes
 
@@ -96,8 +97,9 @@ def main():
 
     fig.suptitle(figure_title())
 
-    plt.tight_layout()
-    plt.show()
+    fig.set_size_inches(16, 9)
+    fig.tight_layout()
+    fig.savefig("traffic_distribution.pdf", transparent=True)
 
 
 if __name__ == "__main__":
