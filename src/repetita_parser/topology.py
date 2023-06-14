@@ -33,7 +33,7 @@ class Topology:
         self.nodes: List[Node] = nodes
         self.edges: List[Edge] = edges
 
-    def as_nx_graph(self) -> nx.MultiDiGraph:  # pyright: ignore [reportUnboundVariable]
+    def as_nx_graph(self):
         """
         Convert the topology to a `networkx.MultiDiGraph`. In the graph, nodes
         are represented by their index into `self.nodes`. Node and edge objects
