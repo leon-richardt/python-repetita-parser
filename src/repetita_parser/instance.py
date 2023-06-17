@@ -1,13 +1,12 @@
 from os import PathLike
 from string import Template
-from typing import List
 
 import numpy as np
 
 from repetita_parser import demands, errors, topology
 
 
-def _build_tm(topology: topology.Topology, demands: List[demands.Demand]) -> np.ndarray:
+def _build_tm(topology: topology.Topology, demands: demands.Demands) -> np.ndarray:
     """
     Per the format specification, demands between the same node pair can occur
     multiple times. This function collapses the list of demands into a
@@ -17,7 +16,7 @@ def _build_tm(topology: topology.Topology, demands: List[demands.Demand]) -> np.
     num_nodes = len(topology.nodes)
     tm = np.zeros(shape=(num_nodes, num_nodes))
 
-    for d in demands:
+    for d in demands.list:
         tm[d.src, d.dest] += d.bandwidth
 
     return tm
@@ -26,11 +25,11 @@ def _build_tm(topology: topology.Topology, demands: List[demands.Demand]) -> np.
 class Instance:
     def __init__(self, topology_file: PathLike, demands_file: PathLike) -> None:
         self.topology: topology.Topology = topology.parse(topology_file)
-        self.demands: List[demands.Demand] = demands.parse(demands_file)
+        self.demands: demands.Demands = demands.parse(demands_file)
 
         # Check if all indices in parsed demands are valid for parsed topology
         min_node_idx, max_node_idx = 0, len(self.topology.nodes) - 1
-        for d in self.demands:
+        for d in self.demands.list:
             src_ok = min_node_idx <= d.src <= max_node_idx
             dest_ok = min_node_idx <= d.dest <= max_node_idx
 

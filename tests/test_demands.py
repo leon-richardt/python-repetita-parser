@@ -8,7 +8,7 @@ from repetita_parser import demands, errors
 
 def test_parse():
     d = demands.parse(DEMANDS_FILE_PATH)
-    assert len(d) == 870
+    assert len(d.list) == 870
 
 
 bad_root = Path("tests/data/parsing/bad")

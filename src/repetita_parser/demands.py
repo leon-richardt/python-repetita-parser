@@ -11,7 +11,17 @@ class Demand(NamedTuple):
     bandwidth: float
 
 
-def parse(file_path: PathLike) -> List[Demand]:
+class Demands:
+    """
+    Wrapper object for demands. Use `Demands.list` to get access to the
+    actual `Demand` objects.
+    """
+
+    def __init__(self, demands: List[Demand]) -> None:
+        self.list = demands
+
+
+def parse(file_path: PathLike) -> Demands:
     demands_id = "DEMANDS"
     memo_line = "label src dest bw\n"
     num_header_fields = 2
@@ -43,4 +53,4 @@ def parse(file_path: PathLike) -> List[Demand]:
 
                 demands.append(Demand(label, src, dest, bw))
 
-    return demands
+    return Demands(demands)
