@@ -1,7 +1,7 @@
-from os import PathLike
 from typing import List, NamedTuple
 
 from repetita_parser.errors import ParseError
+from repetita_parser.types import PathLike
 
 
 class Demand(NamedTuple):

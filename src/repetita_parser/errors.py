@@ -1,5 +1,6 @@
-from os import PathLike
 from typing import Optional
+
+from repetita_parser.types import PathLike
 
 
 class ParseError(Exception):
