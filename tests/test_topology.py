@@ -3,8 +3,7 @@ from pathlib import Path
 import pytest
 from paths import TOPOLOGY_FILE_PATH
 
-from repetita_parser import topology
-from repetita_parser.errors import ParseError
+from repetita_parser import errors, topology
 
 
 def test_parse():
@@ -32,23 +31,23 @@ def test_no_networkx():
     topology._has_networkx = True
 
 
-def test_parse_errors():
-    root = Path("tests/data/parsing/bad")
+bad_root = Path("tests/data/parsing/bad")
 
-    with pytest.raises(ParseError, match="expected nodes header line"):
-        topology.parse(root / "bad_node_header.graph")
 
-    with pytest.raises(ParseError, match="expected nodes memo line"):
-        topology.parse(root / "bad_node_memo.graph")
-
-    with pytest.raises(ParseError, match="not all node fields present"):
-        topology.parse(root / "bad_node_fields.graph")
-
-    with pytest.raises(ParseError, match="expected edges header line"):
-        topology.parse(root / "bad_edge_header.graph")
-
-    with pytest.raises(ParseError, match="expected edges memo line"):
-        topology.parse(root / "bad_edge_memo.graph")
-
-    with pytest.raises(ParseError, match="not all edge fields present"):
-        topology.parse(root / "bad_edge_fields.graph")
+@pytest.mark.parametrize(
+    "topo_file, expectation",
+    [
+        (
+            bad_root / "bad_node_header.graph",
+            pytest.raises(errors.ParseError, match="expected nodes header line"),
+        ),
+        (bad_root / "bad_node_memo.graph", pytest.raises(errors.ParseError, match="expected nodes memo line")),
+        (bad_root / "bad_node_fields.graph", pytest.raises(errors.ParseError, match="not all node fields present")),
+        (bad_root / "bad_edge_header.graph", pytest.raises(errors.ParseError, match="expected edges header line")),
+        (bad_root / "bad_edge_memo.graph", pytest.raises(errors.ParseError, match="expected edges memo line")),
+        (bad_root / "bad_edge_fields.graph", pytest.raises(errors.ParseError, match="not all edge fields present")),
+    ],
+)
+def test_parse_errors(topo_file, expectation):
+    with expectation:
+        topology.parse(topo_file)
