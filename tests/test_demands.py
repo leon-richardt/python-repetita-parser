@@ -13,7 +13,7 @@ def test_parse():
 
 
 def test_parse_errors():
-    root = Path("tests/data/bad")
+    root = Path("tests/data/parsing/bad")
 
     with pytest.raises(ParseError, match="expected demands header line"):
         demands.parse(root / "bad_header.demands")

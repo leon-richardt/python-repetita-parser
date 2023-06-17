@@ -33,7 +33,7 @@ def test_no_networkx():
 
 
 def test_parse_errors():
-    root = Path("tests/data/bad")
+    root = Path("tests/data/parsing/bad")
 
     with pytest.raises(ParseError, match="expected nodes header line"):
         topology.parse(root / "bad_node_header.graph")
