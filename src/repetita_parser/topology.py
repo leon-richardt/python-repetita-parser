@@ -29,9 +29,11 @@ class Edge(NamedTuple):
 
 
 class Topology:
-    def __init__(self, nodes: List[Node], edges: List[Edge]) -> None:
+    def __init__(self, nodes: List[Node], edges: List[Edge], source_file: PathLike) -> None:
         self.nodes: List[Node] = nodes
         self.edges: List[Edge] = edges
+
+        self.source_file = source_file
 
     def as_nx_graph(self):
         """
@@ -134,7 +136,7 @@ def _parse_edges(state: _ParserState) -> List[Edge]:
     return edges
 
 
-def parse(file_path: PathLike):
+def parse(file_path: PathLike) -> Topology:
     nodes_id = "NODES"
     edges_id = "EDGES"
 
@@ -161,4 +163,4 @@ def parse(file_path: PathLike):
 
         edges = _parse_edges(state)
 
-        return Topology(nodes, edges)
+        return Topology(nodes, edges, file_path)

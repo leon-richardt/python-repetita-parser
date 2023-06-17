@@ -17,8 +17,10 @@ class Demands:
     actual `Demand` objects.
     """
 
-    def __init__(self, demands: List[Demand]) -> None:
+    def __init__(self, demands: List[Demand], source_file: PathLike) -> None:
         self.list = demands
+
+        self.source_file = source_file
 
 
 def parse(file_path: PathLike) -> Demands:
@@ -53,4 +55,4 @@ def parse(file_path: PathLike) -> Demands:
 
                 demands.append(Demand(label, src, dest, bw))
 
-    return Demands(demands)
+    return Demands(demands, file_path)
