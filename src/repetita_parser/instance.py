@@ -1,9 +1,10 @@
 from os import PathLike
+from string import Template
 from typing import List
 
 import numpy as np
 
-from repetita_parser import demands, topology
+from repetita_parser import demands, errors, topology
 
 
 def _build_tm(topology: topology.Topology, demands: List[demands.Demand]) -> np.ndarray:
@@ -26,6 +27,25 @@ class Instance:
     def __init__(self, topology_file: PathLike, demands_file: PathLike) -> None:
         self.topology: topology.Topology = topology.parse(topology_file)
         self.demands: List[demands.Demand] = demands.parse(demands_file)
+
+        # Check if all indices in parsed demands are valid for parsed topology
+        min_node_idx, max_node_idx = 0, len(self.topology.nodes) - 1
+        for d in self.demands:
+            src_ok = min_node_idx <= d.src <= max_node_idx
+            dest_ok = min_node_idx <= d.dest <= max_node_idx
+
+            if not (src_ok and dest_ok):
+                msg_template = Template(f"demand {d.label}: node index $index does not exist in topology")
+
+                if not src_ok:
+                    msg = msg_template.substitute(index=d.src)
+                else:
+                    msg = msg_template.substitute(index=d.dest)
+
+                # XXX: In theory, both indices could be invalid. In that case,
+                #      we only report the invalid source index.
+
+                raise errors.ValidationError(msg, topology_file, demands_file)
 
         self.traffic_matrix = _build_tm(self.topology, self.demands)
         """

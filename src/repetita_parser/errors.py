@@ -26,3 +26,11 @@ class ParseError(Exception):
         retval += self.message
 
         return retval
+
+
+class ValidationError(Exception):
+    def __init__(self, message: str, topo_path: PathLike, demands_path: PathLike):
+        super().__init__(message)
+
+        self.topo_path = topo_path
+        self.demands_path = demands_path
