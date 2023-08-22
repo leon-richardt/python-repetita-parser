@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from paths import TOPOLOGY_FILE_PATH
+from paths import EXPORT_TOPOLOGY_FILE_PATH, TOPOLOGY_FILE_PATH
 
 from repetita_parser import errors, topology
 
@@ -29,6 +29,20 @@ def test_no_networkx():
         topo.as_nx_graph()
 
     topology._has_networkx = True
+
+
+def test_export():
+    # NOTE: Depends on `Topology.parse()` being correct
+    ground_truth_topo = topology.parse(TOPOLOGY_FILE_PATH)
+    with open(EXPORT_TOPOLOGY_FILE_PATH, "w") as f:
+        ground_truth_topo.export(f)
+
+    import_topo = topology.parse(EXPORT_TOPOLOGY_FILE_PATH)
+
+    assert ground_truth_topo == import_topo
+
+    # This line is for coverage of `Topology.__ne__()`
+    assert not (ground_truth_topo != import_topo)
 
 
 bad_root = Path("tests/data/parsing/bad")

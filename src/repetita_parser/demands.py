@@ -1,7 +1,11 @@
+from io import TextIOBase
 from typing import List, NamedTuple
 
 from repetita_parser.errors import ParseError
 from repetita_parser.types import PathLike
+
+DEMANDS_ID = "DEMANDS"
+DEMANDS_MEMO_LINE = "label src dest bw\n"
 
 
 class Demand(NamedTuple):
@@ -22,12 +26,37 @@ class Demands:
 
         self.source_file = source_file
 
+    def export(self, target: TextIOBase) -> None:
+        target.writelines(
+            [
+                f"{DEMANDS_ID} {len(self.list)}\n",
+                DEMANDS_MEMO_LINE,
+            ]
+        )
+
+        target.writelines([f"{d.label} {d.src} {d.dest} {d.bandwidth}\n" for d in self.list])
+
+    def __eq__(self, other) -> bool:
+        """
+        Comparison for equality is only defined in terms of the demands
+        themselves , i.e., two instances can be equal although their source
+        files differ.
+        """
+        return self.list == other.list
+
+    def __ne__(self, other) -> bool:
+        """
+        Comparison for equality is only defined in terms of the demands
+        themselves , i.e., two instances can be equal although their source
+        files differ.
+        """
+        return not (self.list == other.list)
+
 
 def parse(file_path: PathLike) -> Demands:
-    demands_id = "DEMANDS"
-    memo_line = "label src dest bw\n"
-    num_header_fields = 2
     num_demand_fields = 4
+    # If this changes, we have to touch the impl
+    assert num_demand_fields == len(DEMANDS_MEMO_LINE.strip().split(" "))
 
     demands: List[Demand] = []
 
@@ -36,11 +65,13 @@ def parse(file_path: PathLike) -> Demands:
             fields = line.strip("\n").split()
 
             if line_idx == 0:
-                if len(fields) != num_header_fields or fields[0] != demands_id:
+                # Two fields: `DEMANDS_ID` and number of demands
+                num_header_fields = 2
+                if len(fields) != num_header_fields or fields[0] != DEMANDS_ID:
                     msg = "expected demands header line"
                     raise ParseError(msg, file_path, line_idx + 1)
             elif line_idx == 1:
-                if line != memo_line:
+                if line != DEMANDS_MEMO_LINE:
                     msg = "expected demands memo line"
                     raise ParseError(msg, file_path, line_idx + 1)
             else:

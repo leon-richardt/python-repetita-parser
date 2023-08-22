@@ -1,3 +1,4 @@
+from io import TextIOBase
 from os import PathLike
 from string import Template
 
@@ -50,3 +51,18 @@ class Instance:
         """
         Total traffic demand from node `i` to node `j` at `traffic_matrix[i, j]`
         """
+
+    def __eq__(self, other) -> bool:
+        return all(
+            [
+                self.topology == other.topology,
+                self.demands == other.demands,
+            ]
+        )
+
+    def __ne__(self, other) -> bool:
+        return not (self == other)
+
+    def export(self, topology_target: TextIOBase, demands_target: TextIOBase) -> None:
+        self.topology.export(topology_target)
+        self.demands.export(demands_target)

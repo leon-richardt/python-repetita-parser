@@ -12,6 +12,11 @@ except ImportError:
 else:
     _has_networkx = True
 
+NODES_ID = "NODES"
+EDGES_ID = "EDGES"
+NODES_MEMO_LINE = "label x y\n"
+EDGES_MEMO_LINE = "label src dest weight bw delay\n"
+
 
 class Node(NamedTuple):
     label: str
@@ -34,6 +39,27 @@ class Topology:
         self.edges: List[Edge] = edges
 
         self.source_file = source_file
+
+    def __eq__(self, other) -> bool:
+        """
+        Comparison for equality is only defined in terms of the topology
+        structure, i.e., two instances can be equal although their source files
+        differ.
+        """
+        return all(
+            [
+                self.nodes == other.nodes,
+                self.edges == other.edges,
+            ]
+        )
+
+    def __ne__(self, other) -> bool:
+        """
+        Comparison for equality is only defined in terms of the topology
+        structure, i.e., two instances can be equal although their source files
+        differ.
+        """
+        return not (self == other)
 
     def as_nx_graph(self):
         """
@@ -59,6 +85,28 @@ class Topology:
 
             return graph
 
+    def export(self, target: io.TextIOBase) -> None:
+        # Write node info
+        target.writelines(
+            [
+                f"{NODES_ID} {len(self.nodes)}\n",
+                NODES_MEMO_LINE,
+            ]
+        )
+
+        target.writelines([f"{n.label} {n.x} {n.y}\n" for n in self.nodes])
+        target.write("\n")
+
+        # Write edge info
+        target.writelines(
+            [
+                f"{EDGES_ID} {len(self.edges)}\n",
+                EDGES_MEMO_LINE,
+            ]
+        )
+
+        target.writelines([f"{e.label} {e.src} {e.dest} {e.weight} {e.bandwidth} {e.delay}\n" for e in self.edges])
+
 
 @dataclass
 class _ParserState:
@@ -72,8 +120,9 @@ class _ParserState:
 
 
 def _parse_nodes(state: _ParserState) -> List[Node]:
-    memo_line = "label x y\n"
     num_node_fields = 3
+    # If this changes, we have to touch the impl
+    assert len(NODES_MEMO_LINE.strip().split(" ")) == num_node_fields
 
     nodes: List[Node] = []
 
@@ -82,7 +131,7 @@ def _parse_nodes(state: _ParserState) -> List[Node]:
         fields = line.strip("\n").split()
 
         if state.line_idx == 1:
-            if line != memo_line:
+            if line != NODES_MEMO_LINE:
                 msg = "expected nodes memo line"
                 raise ParseError(msg, state.file_path, state.line_num)
         elif len(fields) != num_node_fields:
@@ -102,8 +151,9 @@ def _parse_nodes(state: _ParserState) -> List[Node]:
 
 
 def _parse_edges(state: _ParserState) -> List[Edge]:
-    memo_line = "label src dest weight bw delay\n"
     num_edge_fields = 6
+    # If this changes, we have to touch the impl
+    assert num_edge_fields == len(EDGES_MEMO_LINE.strip().split(" "))
 
     edges: List[Edge] = []
 
@@ -113,7 +163,7 @@ def _parse_edges(state: _ParserState) -> List[Edge]:
         fields = line.strip("\n").split()
 
         if state.line_idx == start_line_idx:
-            if line != memo_line:
+            if line != EDGES_MEMO_LINE:
                 msg = "expected edges memo line"
                 raise ParseError(msg, state.file_path, state.line_num)
         else:
@@ -137,15 +187,12 @@ def _parse_edges(state: _ParserState) -> List[Edge]:
 
 
 def parse(file_path: PathLike) -> Topology:
-    nodes_id = "NODES"
-    edges_id = "EDGES"
-
     with open(file_path) as f:
         cur_line_idx = 0
         line = f.readline()
         fields = line.strip("\n").split()
 
-        if fields[0] != nodes_id:
+        if fields[0] != NODES_ID:
             msg = "expected nodes header line"
             raise ParseError(msg, file_path, cur_line_idx + 1)
 
@@ -157,7 +204,7 @@ def parse(file_path: PathLike) -> Topology:
         state.line_idx += 1
         fields = line.strip("\n").split()
 
-        if fields[0] != edges_id:
+        if fields[0] != EDGES_ID:
             msg = "expected edges header line"
             raise ParseError(msg, file_path, cur_line_idx + 1)
 
