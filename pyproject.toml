@@ -27,6 +27,9 @@ exclude = [
     "examples"
 ]
 
+[tool.hatch.build.force-include]
+"./tests/data/export/instance" = "tests/data/export/instance"
+
 [tool.hatch.envs.default]
 dependencies = [
   "coverage[toml]>=6.5",
