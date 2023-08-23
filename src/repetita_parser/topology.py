@@ -1,6 +1,6 @@
 import io
 from dataclasses import dataclass
-from typing import List, NamedTuple
+from typing import List
 
 from repetita_parser.errors import ParseError
 from repetita_parser.types import PathLike
@@ -18,13 +18,15 @@ NODES_MEMO_LINE = "label x y\n"
 EDGES_MEMO_LINE = "label src dest weight bw delay\n"
 
 
-class Node(NamedTuple):
+@dataclass
+class Node:
     label: str
     x: float
     y: float
 
 
-class Edge(NamedTuple):
+@dataclass
+class Edge:
     label: str
     src: int
     dest: int
