@@ -1,5 +1,6 @@
+from dataclasses import dataclass
 from io import TextIOBase
-from typing import List, NamedTuple
+from typing import List
 
 from repetita_parser.errors import ParseError
 from repetita_parser.types import PathLike
@@ -8,7 +9,8 @@ DEMANDS_ID = "DEMANDS"
 DEMANDS_MEMO_LINE = "label src dest bw\n"
 
 
-class Demand(NamedTuple):
+@dataclass
+class Demand:
     label: str
     src: int
     dest: int
