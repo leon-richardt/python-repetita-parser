@@ -91,8 +91,10 @@ def main():
     def figure_title():
         num_nodes = len(instance.topology.nodes)
         num_edges = len(instance.topology.edges)
-        return "Topology: {},\nDemands: {}\n({} nodes, density: {:.2f}%)".format(
-            topo_file, demands_file, num_nodes, (100 * num_edges / num_nodes**2)
+        return (
+            f"Topology: {topo_file},\n"
+            f"Demands: {demands_file}\n"
+            f"({num_nodes} nodes, density: {100 * num_edges / num_nodes**2:.2f}%)"
         )
 
     fig.suptitle(figure_title())
