@@ -4,6 +4,7 @@ from typing import List
 
 from repetita_parser.errors import ParseError
 from repetita_parser.types import PathLike
+from repetita_parser.utils import has_inline_comment, is_comment_line
 
 try:
     import networkx as nx
@@ -16,6 +17,8 @@ NODES_ID = "NODES"
 EDGES_ID = "EDGES"
 NODES_MEMO_LINE = "label x y\n"
 EDGES_MEMO_LINE = "label src dest weight bw delay\n"
+
+
 
 
 @dataclass
@@ -115,6 +118,7 @@ class _ParserState:
     stream: io.TextIOWrapper
     file_path: PathLike
     line_idx: int
+    strict: bool
 
     @property
     def line_num(self) -> int:
@@ -127,15 +131,39 @@ def _parse_nodes(state: _ParserState) -> List[Node]:
     assert len(NODES_MEMO_LINE.strip().split(" ")) == num_node_fields
 
     nodes: List[Node] = []
+    memo_line_processed = False
 
     # Nodes and edges are separated by a blank line
-    while (line := state.stream.readline()) != "\n":
+    while True:
+        line = state.stream.readline()
+        if line == "\n":  # Blank line separator
+            state.line_idx += 1
+            break
+        if not line:  # EOF
+            break
+
+        state.line_idx += 1
+
+        # Skip comments in non-strict mode
+        if is_comment_line(line):
+            if state.strict:
+                msg = "unexpected comment line in strict mode"
+                raise ParseError(msg, state.file_path, state.line_num)
+            continue
+
+        # Check for inline comments (should fail in both modes)
+        if has_inline_comment(line):
+            msg = "inline comments not allowed in data lines"
+            raise ParseError(msg, state.file_path, state.line_num)
+
         fields = line.strip("\n").split()
 
-        if state.line_idx == 1:
+        if not memo_line_processed:
+            # First non-comment line should be memo line
             if line != NODES_MEMO_LINE:
                 msg = "expected nodes memo line"
                 raise ParseError(msg, state.file_path, state.line_num)
+            memo_line_processed = True
         elif len(fields) != num_node_fields:
             msg = "not all node fields present"
             raise ParseError(msg, state.file_path, state.line_num)
@@ -146,9 +174,6 @@ def _parse_nodes(state: _ParserState) -> List[Node]:
 
             nodes.append(Node(label, x, y))
 
-        state.line_idx += 1
-
-    state.line_idx += 1
     return nodes
 
 
@@ -158,16 +183,36 @@ def _parse_edges(state: _ParserState) -> List[Edge]:
     assert num_edge_fields == len(EDGES_MEMO_LINE.strip().split(" "))
 
     edges: List[Edge] = []
+    memo_line_processed = False
 
-    start_line_idx = state.line_idx
     # At EOF, we read an empty string which is falsey
-    while line := state.stream.readline():
+    while True:
+        line = state.stream.readline()
+        if not line:  # EOF
+            break
+
+        state.line_idx += 1
+
+        # Skip comments in non-strict mode
+        if is_comment_line(line):
+            if state.strict:
+                msg = "unexpected comment line in strict mode"
+                raise ParseError(msg, state.file_path, state.line_num)
+            continue
+
+        # Check for inline comments (should fail in both modes)
+        if has_inline_comment(line):
+            msg = "inline comments not allowed in data lines"
+            raise ParseError(msg, state.file_path, state.line_num)
+
         fields = line.strip("\n").split()
 
-        if state.line_idx == start_line_idx:
+        if not memo_line_processed:
+            # First non-comment line should be memo line
             if line != EDGES_MEMO_LINE:
                 msg = "expected edges memo line"
                 raise ParseError(msg, state.file_path, state.line_num)
+            memo_line_processed = True
         else:
             if len(fields) != num_edge_fields:
                 msg = "not all edge fields present"
@@ -182,33 +227,67 @@ def _parse_edges(state: _ParserState) -> List[Edge]:
 
             edges.append(Edge(label, src, dest, weight, bw, delay))
 
-        state.line_idx += 1
-
-    state.line_idx += 1
     return edges
 
 
-def parse(file_path: PathLike) -> Topology:
+def parse(file_path: PathLike, strict: bool = True) -> Topology:
     with open(file_path) as f:
         cur_line_idx = 0
-        line = f.readline()
-        fields = line.strip("\n").split()
 
-        if fields[0] != NODES_ID:
-            msg = "expected nodes header line"
-            raise ParseError(msg, file_path, cur_line_idx + 1)
+        # Skip comments at the beginning and find NODES header
+        while True:
+            line = f.readline()
+            if not line:  # EOF
+                msg = "expected nodes header line"
+                raise ParseError(msg, file_path, cur_line_idx + 1)
 
-        cur_line_idx += 1
-        state = _ParserState(f, file_path, cur_line_idx)
+            cur_line_idx += 1
+
+            if is_comment_line(line):
+                if strict:
+                    msg = "unexpected comment line in strict mode"
+                    raise ParseError(msg, file_path, cur_line_idx)
+                continue
+
+            # Check for inline comments in header line (should fail in both modes)
+            if has_inline_comment(line):
+                msg = "inline comments not allowed in header lines"
+                raise ParseError(msg, file_path, cur_line_idx)
+
+            fields = line.strip("\n").split()
+            if fields[0] != NODES_ID:
+                msg = "expected nodes header line"
+                raise ParseError(msg, file_path, cur_line_idx)
+            break
+
+        state = _ParserState(f, file_path, cur_line_idx, strict)
         nodes = _parse_nodes(state)
 
-        line = f.readline()
-        state.line_idx += 1
-        fields = line.strip("\n").split()
+        # Skip comments and find EDGES header
+        while True:
+            line = f.readline()
+            if not line:  # EOF
+                msg = "expected edges header line"
+                raise ParseError(msg, file_path, state.line_idx + 1)
 
-        if fields[0] != EDGES_ID:
-            msg = "expected edges header line"
-            raise ParseError(msg, file_path, cur_line_idx + 1)
+            state.line_idx += 1
+
+            if is_comment_line(line):
+                if strict:
+                    msg = "unexpected comment line in strict mode"
+                    raise ParseError(msg, file_path, state.line_num)
+                continue
+
+            # Check for inline comments in header line (should fail in both modes)
+            if has_inline_comment(line):
+                msg = "inline comments not allowed in header lines"
+                raise ParseError(msg, file_path, state.line_num)
+
+            fields = line.strip("\n").split()
+            if fields[0] != EDGES_ID:
+                msg = "expected edges header line"
+                raise ParseError(msg, file_path, state.line_num)
+            break
 
         edges = _parse_edges(state)
 

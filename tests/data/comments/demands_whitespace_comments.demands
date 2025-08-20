@@ -1,0 +1,9 @@
+  # Comment with leading spaces
+	# Comment with leading tab
+DEMANDS 3
+label src dest bw
+demand_0 0 1 100.0
+   # Comment with spaces
+demand_1 1 2 200.0
+		# Comment with tabs
+demand_2 0 2 300.0

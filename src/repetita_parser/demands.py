@@ -4,9 +4,12 @@ from typing import List
 
 from repetita_parser.errors import ParseError
 from repetita_parser.types import PathLike
+from repetita_parser.utils import has_inline_comment, is_comment_line
 
 DEMANDS_ID = "DEMANDS"
 DEMANDS_MEMO_LINE = "label src dest bw\n"
+
+
 
 
 @dataclass
@@ -55,7 +58,7 @@ class Demands:
         return not (self.list == other.list)
 
 
-def parse(file_path: PathLike) -> Demands:
+def parse(file_path: PathLike, strict: bool = True) -> Demands:
     num_demand_fields = 4
     # If this changes, we have to touch the impl
     assert num_demand_fields == len(DEMANDS_MEMO_LINE.strip().split(" "))
@@ -63,23 +66,45 @@ def parse(file_path: PathLike) -> Demands:
     demands: List[Demand] = []
 
     with open(file_path) as f:
-        for line_idx, line in enumerate(f.readlines()):
+        line_idx = 0
+        header_processed = False
+        memo_processed = False
+
+        for line in f:
+            line_idx += 1
+
+            # Skip comments in non-strict mode
+            if is_comment_line(line):
+                if strict:
+                    msg = "unexpected comment line in strict mode"
+                    raise ParseError(msg, file_path, line_idx)
+                continue
+
+            # Check for inline comments (should fail in both modes)
+            if has_inline_comment(line):
+                msg = "inline comments not allowed in data lines"
+                raise ParseError(msg, file_path, line_idx)
+
             fields = line.strip("\n").split()
 
-            if line_idx == 0:
-                # Two fields: `DEMANDS_ID` and number of demands
+            if not header_processed:
+                # First non-comment line should be DEMANDS header
                 num_header_fields = 2
                 if len(fields) != num_header_fields or fields[0] != DEMANDS_ID:
                     msg = "expected demands header line"
-                    raise ParseError(msg, file_path, line_idx + 1)
-            elif line_idx == 1:
+                    raise ParseError(msg, file_path, line_idx)
+                header_processed = True
+            elif not memo_processed:
+                # Second non-comment line should be memo line
                 if line != DEMANDS_MEMO_LINE:
                     msg = "expected demands memo line"
-                    raise ParseError(msg, file_path, line_idx + 1)
+                    raise ParseError(msg, file_path, line_idx)
+                memo_processed = True
             else:
+                # Subsequent non-comment lines should be demand data
                 if len(fields) != num_demand_fields:
                     msg = "not all demand fields present"
-                    raise ParseError(msg, file_path, line_idx + 1)
+                    raise ParseError(msg, file_path, line_idx)
 
                 label = fields[0]
                 src = int(fields[1])

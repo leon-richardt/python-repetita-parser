@@ -1,0 +1,14 @@
+  # Comment with leading spaces
+	# Comment with leading tab
+NODES 3
+label x y
+0_NodeA 1.0 2.0
+   # Comment with spaces in middle
+1_NodeB 3.0 4.0
+2_NodeC 5.0 6.0
+
+EDGES 2
+label src dest weight bw delay
+edge_0 0 1 1.0 1000 10
+		# Comment with tabs in middle
+edge_1 1 2 2.0 2000 20
