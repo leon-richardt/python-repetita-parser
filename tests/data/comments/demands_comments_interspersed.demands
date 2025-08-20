@@ -1,0 +1,7 @@
+DEMANDS 3
+label src dest bw
+demand_0 0 1 100.0
+# Comment between demands
+demand_1 1 2 200.0
+# Another comment
+demand_2 0 2 300.0

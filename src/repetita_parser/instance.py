@@ -24,9 +24,9 @@ def _build_tm(topology: topology.Topology, demands: demands.Demands) -> np.ndarr
 
 
 class Instance:
-    def __init__(self, topology_file: PathLike, demands_file: PathLike) -> None:
-        self.topology: topology.Topology = topology.parse(topology_file)
-        self.demands: demands.Demands = demands.parse(demands_file)
+    def __init__(self, topology_file: PathLike, demands_file: PathLike, strict: bool = True) -> None:
+        self.topology: topology.Topology = topology.parse(topology_file, strict=strict)
+        self.demands: demands.Demands = demands.parse(demands_file, strict=strict)
 
         # Check if all indices in parsed demands are valid for parsed topology
         min_node_idx, max_node_idx = 0, len(self.topology.nodes) - 1
