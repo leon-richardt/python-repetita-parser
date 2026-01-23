@@ -16,4 +16,4 @@ seaborn==0.13.2
 setuptools==80.9.0
 six==1.17.0
 tzdata==2025.2
-wheel==0.45.1
+wheel==0.46.2
